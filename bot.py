@@ -10,7 +10,10 @@ BLACKPINK Telegram Bot — кидает все новые видео и шорт
 
 import asyncio
 import logging
+import os
+import threading
 from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
@@ -23,6 +26,24 @@ from storage import load_sent, save_sent, filter_new
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("blackpink-bot")
+
+# Health server для Render Web Service (free план требует порт)
+def start_health_server():
+    port = int(os.getenv("PORT", "10000"))
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"blackpink-bot alive")
+        def log_message(self, format, *args):
+            return
+    try:
+        srv = HTTPServer(("0.0.0.0", port), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        log.info(f"Health server on {port}")
+    except Exception as e:
+        log.warning(f"health server failed: {e}")
 
 bot = Bot(token=config.BOT_TOKEN)
 dp = Dispatcher()
@@ -210,6 +231,7 @@ async def background_loop():
 
 async def main():
     global sent_ids
+    start_health_server()
     if not config.BOT_TOKEN:
         print("❌ BOT_TOKEN не задан! Заполни .env (скопируй из .env.example)")
         return

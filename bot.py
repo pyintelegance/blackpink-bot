@@ -32,10 +32,26 @@ def start_health_server():
     port = int(os.getenv("PORT", "10000"))
     class H(BaseHTTPRequestHandler):
         def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            self.wfile.write(b"blackpink-bot alive")
+            try:
+                import json as _json
+                # диагностический JSON для проверки Render без дашборда
+                payload = {
+                    "status": "alive",
+                    "admin_id": getattr(config, "ADMIN_ID", 0),
+                    "sent_count": len(sent_ids),
+                    "last_check": last_check.isoformat() if last_check else None,
+                    "check_interval": getattr(config, "CHECK_INTERVAL", 0),
+                }
+                body = _json.dumps(payload, ensure_ascii=False).encode()
+                self.send_response(200)
+                self.send_header("Content-type", "application/json")
+                self.end_headers()
+                self.wfile.write(body)
+            except Exception:
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"blackpink-bot alive")
         def log_message(self, format, *args):
             return
     try:

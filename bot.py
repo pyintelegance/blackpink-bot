@@ -109,12 +109,20 @@ async def check_and_notify(chat_id: int | None = None, initial: bool = False) ->
                 save_sent(config.DATA_FILE, sent_ids)
                 last_check = datetime.now()
                 return len(demo)
-            else:
+            elif not sent_ids:
                 for v in videos:
                     sent_ids.add(v["video_id"])
                 save_sent(config.DATA_FILE, sent_ids)
                 last_check = datetime.now()
                 return 0
+            elif not new_videos:
+                # база есть, новых нет — просто обновляем время
+                for v in videos:
+                    sent_ids.add(v["video_id"])
+                save_sent(config.DATA_FILE, sent_ids)
+                last_check = datetime.now()
+                return 0
+            # если база есть И есть новые видео — НЕ глотаем, идём дальше к обычной отправке
 
         if not new_videos:
             last_check = datetime.now()

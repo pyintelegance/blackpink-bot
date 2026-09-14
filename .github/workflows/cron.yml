@@ -24,6 +24,6 @@ jobs:
           if git diff --quiet; then echo "no changes"; exit 0; fi
           git config user.name "blink-bot"
           git config user.email "bot@blink"
-          git add data/sent.json
+          git add -f data/sent.json
           git commit -m "update sent.json [skip ci]" || true
           git push
